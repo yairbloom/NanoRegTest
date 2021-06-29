@@ -2,6 +2,8 @@ import pymongo
 import requests
 import time
 import os.path
+import shutil
+import tempfile
 
 
 class ServerChecker:
@@ -20,6 +22,8 @@ class ServerChecker:
     self.NotifyJobActiveUrl = self.BasicUrl + 'printers/NotifyJobActive'
 
     self.PrinterName = f'{time.time()}-Printer'
+    self.JobId = None
+    self.PrintTimeInHours='7.9999912'
     self.FileToUpload = os.path.join(os.path.dirname(os.path.realpath(__file__)),'Reference' , 'DC to DC up converter.pcbjc')
 
 #########################################################################################################
@@ -100,12 +104,89 @@ class ServerChecker:
                 os.path.isfile(JobItem['JobPath']) and 
                 os.path.getsize(JobItem['JobPath']) == os.path.getsize(self.FileToUpload)):
              Ret = True
+             self.JobId = JsonRsp['_id']
     except Exception as e:
       Ret = False
       ErrStr = str(e)
          
     print(f'UploadJob {Ret} {ErrStr}')
     return Ret
+#########################################################################################################
+
+  def CheckJobData(self , JobDict):
+    Ret = True
+    ErrStr = ''
+    JsonRes=None
+    try:
+      res = requests.get(self.GetJobInfoUrl , params={'PrinterIdentifier':self.PrinterName , 'JobId': self.JobId})
+      Ret = res and res.status_code==200
+      if (Ret):
+        JsonRes = res.json()
+      for item in JobDict.keys():
+        if item in JsonRes and JsonRes[item] == JobDict[item]:
+           continue  
+        Ret = False
+        print(f'{item} {JsonRes[item]}')
+    except Exception as e:
+      Ret = False
+      ErrStr = str(e)
+         
+    print(f'CheckJobData {Ret} {ErrStr}')
+    return Ret
+
+#########################################################################################################
+  def DownloadJob(self):
+    Ret = False
+    ErrStr = ''
+    try:
+      new_file, filename = tempfile.mkstemp()
+      with requests.get(self.GetJobUrl,
+                         stream=True,
+                          params={'PrinterIdentifier':self.PrinterName, 'JobId':self.JobId}) as res:
+        with open(new_file, 'wb') as f:
+          shutil.copyfileobj(res.raw, f)
+          Ret = res and (res.status_code==200)
+      Ret = Ret and os.path.getsize(filename) == os.path.getsize(self.FileToUpload)
+    except Exception as e:
+      Ret = False
+      ErrStr = str(e)
+         
+    print(f'DownloadJob {Ret} {ErrStr}')
+    return Ret
+
+#########################################################################################################
+
+  def NotifyJobActive(self):
+    Ret = True
+    ErrStr = ''
+    try:
+      res = requests.get(self.NotifyJobActiveUrl, params={'PrinterIdentifier':self.PrinterName , 'JobId': self.JobId})
+      Ret = res and res.status_code==200
+    except Exception as e:
+      Ret = False
+      ErrStr = str(e)
+         
+    print(f'NotifyJobActive {Ret} {ErrStr}')
+    return Ret
+
+#########################################################################################################
+  def UpdateJobMetadata(self):
+    #Sending insert printer request to the server 
+    Ret = True
+    ErrStr = ''
+    try:
+      res = requests.get(self.UpdateJobMetadataUrl, 
+                          params={'ServerJobId':self.JobId,'PCB:PrintTimeInHours':self.PrintTimeInHours})
+      Ret = res and (res.status_code==200)
+
+    except Exception as e:
+      Ret = False
+      ErrStr = str(e)
+         
+    print(f'UpdateJobMetadata {Ret} {ErrStr}')
+    return Ret
+
+
 
 #########################################################################################################
  
@@ -122,8 +203,22 @@ if __name__ == "__main__":
     RetVal = serverChecker.UploadJob()
   if RetVal:
     RetVal,ResJaon = serverChecker.GetNextJobDetails(200) # Check That Jobs list is not empty
+  if RetVal:
+    RetVal = serverChecker.CheckJobData({'JobStatus':'New'})
+  if RetVal:
+    RetVal = serverChecker.DownloadJob()
+  if RetVal:
+    RetVal = serverChecker.NotifyJobActive()
+  if RetVal:
+    RetVal = serverChecker.CheckJobData({'JobStatus':'Started'})
+
+  if RetVal:
+    RetVal = not serverChecker.CheckJobData({'JobStatus':'Started','PrintTimeInHours': serverChecker.PrintTimeInHours})
+  if RetVal:
+    RetVal = serverChecker.UpdateJobMetadata()
+  if RetVal:
+    RetVal = serverChecker.CheckJobData({'JobStatus':'Started','PrintTimeInHours': serverChecker.PrintTimeInHours})
   if RetVal :
     print('Pass: All Tests')
   #serverChecker.test1()
 
-  
