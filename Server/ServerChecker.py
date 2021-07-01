@@ -21,7 +21,7 @@ class ServerChecker:
     self.GetJobUrl = self.BasicUrl + 'printers/GetJob'
     self.NotifyJobActiveUrl = self.BasicUrl + 'printers/NotifyJobActive'
 
-    self.PrinterName = f'{time.time()}-Printer'
+    self.PrinterName = '{}-Printer'.format(time.time())
     self.JobId = None
     self.PrintTimeInHours='7.9999912'
     self.FileToUpload = os.path.join(os.path.dirname(os.path.realpath(__file__)),'Reference' , 'DC to DC up converter.pcbjc')
@@ -38,7 +38,7 @@ class ServerChecker:
       Ret = False
       ErrStr = str(e)
          
-    print(f'CheckConnection {Ret} {ErrStr}')
+    print('CheckConnection {} {}'.format(Ret,ErrStr))
     return Ret
 
 
@@ -59,7 +59,7 @@ class ServerChecker:
       Ret = False
       ErrStr = str(e)
          
-    print(f'InsertPrinter {Ret} {ErrStr}')
+    print('InsertPrinter {} {}'.format(Ret,ErrStr))
     return Ret
 
 
@@ -78,7 +78,7 @@ class ServerChecker:
       Ret = False
       ErrStr = str(e)
          
-    print(f'GetNextJobDetails {Ret} {ErrStr}')
+    print('GetNextJobDetails {} {}'.format(Ret,ErrStr))
     return Ret , ResJaon
 
 #########################################################################################################
@@ -109,7 +109,7 @@ class ServerChecker:
       Ret = False
       ErrStr = str(e)
          
-    print(f'UploadJob {Ret} {ErrStr}')
+    print('UploadJob {} {}'.format(Ret,ErrStr))
     return Ret
 #########################################################################################################
 
@@ -130,7 +130,7 @@ class ServerChecker:
       Ret = False
       ErrStr = str(e)
          
-    print(f'CheckJobData {Ret==ExpectedRetVal} {ErrStr}')
+    print('CheckJobData {} {}'.format(Ret==ExpectedRetVal,ErrStr))
     return Ret==ExpectedRetVal
 
 #########################################################################################################
@@ -150,7 +150,7 @@ class ServerChecker:
       Ret = False
       ErrStr = str(e)
          
-    print(f'DownloadJob {Ret} {ErrStr}')
+    print('DownloadJob {} {}'.format(Ret,ErrStr))
     return Ret
 
 #########################################################################################################
@@ -165,7 +165,7 @@ class ServerChecker:
       Ret = False
       ErrStr = str(e)
          
-    print(f'NotifyJobActive {Ret} {ErrStr}')
+    print('NotifyJobActive {} {}'.format(Ret,ErrStr))
     return Ret
 
 #########################################################################################################
@@ -182,7 +182,7 @@ class ServerChecker:
       Ret = False
       ErrStr = str(e)
          
-    print(f'UpdateJobMetadata {Ret} {ErrStr}')
+    print('UpdateJobMetadata {} {}'.format(Ret,ErrStr))
     return Ret
 
 
