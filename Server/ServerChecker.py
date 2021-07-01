@@ -113,7 +113,7 @@ class ServerChecker:
     return Ret
 #########################################################################################################
 
-  def CheckJobData(self , JobDict):
+  def CheckJobData(self , JobDict , ExpectedRetVal):
     Ret = True
     ErrStr = ''
     JsonRes=None
@@ -126,13 +126,12 @@ class ServerChecker:
         if item in JsonRes and JsonRes[item] == JobDict[item]:
            continue  
         Ret = False
-        print(f'{item} {JsonRes[item]}')
     except Exception as e:
       Ret = False
       ErrStr = str(e)
          
-    print(f'CheckJobData {Ret} {ErrStr}')
-    return Ret
+    print(f'CheckJobData {Ret==ExpectedRetVal} {ErrStr}')
+    return Ret==ExpectedRetVal
 
 #########################################################################################################
   def DownloadJob(self):
@@ -204,20 +203,20 @@ if __name__ == "__main__":
   if RetVal:
     RetVal,ResJaon = serverChecker.GetNextJobDetails(200) # Check That Jobs list is not empty
   if RetVal:
-    RetVal = serverChecker.CheckJobData({'JobStatus':'New'})
+    RetVal = serverChecker.CheckJobData({'JobStatus':'New'} , True)
   if RetVal:
     RetVal = serverChecker.DownloadJob()
   if RetVal:
     RetVal = serverChecker.NotifyJobActive()
   if RetVal:
-    RetVal = serverChecker.CheckJobData({'JobStatus':'Started'})
+    RetVal = serverChecker.CheckJobData({'JobStatus':'Started'} , True)
 
   if RetVal:
-    RetVal = not serverChecker.CheckJobData({'JobStatus':'Started','PrintTimeInHours': serverChecker.PrintTimeInHours})
+    RetVal = not serverChecker.CheckJobData({'JobStatus':'Started','PrintTimeInHours': serverChecker.PrintTimeInHours} , False)
   if RetVal:
     RetVal = serverChecker.UpdateJobMetadata()
   if RetVal:
-    RetVal = serverChecker.CheckJobData({'JobStatus':'Started','PrintTimeInHours': serverChecker.PrintTimeInHours})
+    RetVal = serverChecker.CheckJobData({'JobStatus':'Started','PrintTimeInHours': serverChecker.PrintTimeInHours} , True)
   if RetVal :
     print('Pass: All Tests')
   #serverChecker.test1()
